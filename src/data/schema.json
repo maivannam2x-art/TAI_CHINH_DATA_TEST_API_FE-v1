@@ -1,0 +1,3908 @@
+[
+  {
+    "name": "roles",
+    "group": "01. Auth & User / Xác thực và người dùng",
+    "purpose": "Danh mục vai trò và phạm vi quyền của tài khoản.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "BIGSERIAL",
+        "length": "-",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NOT NULL; UNIQUE",
+        "description": "Mã vai trò duy nhất dùng trong code, ví dụ ADMIN/ANALYST/USER."
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Tên hiển thị của vai trò."
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mô tả phạm vi quyền/trách nhiệm của vai trò."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "users",
+    "group": "01. Auth & User / Xác thực và người dùng",
+    "purpose": "Hồ sơ người dùng, tách khỏi thông tin đăng nhập nhạy cảm.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "full_name",
+        "type": "VARCHAR(200)",
+        "length": "200",
+        "constraint": "NOT NULL",
+        "description": "Họ tên/ten hiển thị của người dùng."
+      },
+      {
+        "name": "phone",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Số điện thoại liên hệ của người dùng."
+      },
+      {
+        "name": "avatar_url",
+        "type": "VARCHAR(500)",
+        "length": "500",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Đường dẫn ảnh đại diện; có thể NULL."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "accounts",
+    "group": "01. Auth & User / Xác thực và người dùng",
+    "purpose": "Thông tin xác thực, liên kết một-một với hồ sơ người dùng.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "user_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES users(id); ON DELETE CASCADE; NOT NULL; UNIQUE",
+        "description": "Liên kết 1-1 tới hồ sơ users. UNIQUE để bảo đảm mỗi user chỉ có một account."
+      },
+      {
+        "name": "role_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES roles(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "FK tới roles.id. Đây là vai trò duy nhất của account; không dùng bảng user_roles."
+      },
+      {
+        "name": "email",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NOT NULL; UNIQUE",
+        "description": "Email đăng nhập; không trùng, nên so sánh case-insensitive."
+      },
+      {
+        "name": "username",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "UNIQUE",
+        "description": "Tên đăng nhập tùy chọn; không trùng nếu có."
+      },
+      {
+        "name": "password_hash",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NOT NULL",
+        "description": "Mật khẩu đã hash; tuyệt đối không lưu plaintext."
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; DEFAULT 'ACTIVE'; CHECK (status IN ('ACTIVE','INACTIVE','LOCKED','PENDING'))",
+        "description": "Trạng thái account: ACTIVE/INACTIVE/LOCKED/PENDING."
+      },
+      {
+        "name": "last_login_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm đăng nhập thành công gần nhất."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "watchlists",
+    "group": "01. Auth & User / Xác thực và người dùng",
+    "purpose": "Danh sách theo dõi chứng khoán do người dùng tạo.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "user_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES users(id); ON DELETE CASCADE; NOT NULL",
+        "description": "Chủ sở hữu watchlist."
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(150)",
+        "length": "150",
+        "constraint": "NOT NULL",
+        "description": "Tên watchlist."
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mô tả."
+      },
+      {
+        "name": "is_default",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "Watchlist mặc định của user."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "watchlist_items",
+    "group": "01. Auth & User / Xác thực và người dùng",
+    "purpose": "Các mã chứng khoán nằm trong từng danh sách theo dõi.",
+    "fields": [
+      {
+        "name": "watchlist_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; FOREIGN KEY REFERENCES watchlists(id); ON DELETE CASCADE",
+        "description": "Watchlist cha."
+      },
+      {
+        "name": "security_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; FOREIGN KEY REFERENCES securities(id); ON DELETE CASCADE",
+        "description": "Security được theo dõi."
+      },
+      {
+        "name": "note",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ghi chú cá nhân của user."
+      },
+      {
+        "name": "added_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm thêm vào watchlist."
+      }
+    ]
+  },
+  {
+    "name": "audit_logs",
+    "group": "01. Auth & User / Xác thực và người dùng",
+    "purpose": "Nhật ký thao tác quan trọng để truy vết thay đổi.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "BIGSERIAL",
+        "length": "-",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "user_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES users(id); ON DELETE SET NULL",
+        "description": "Người thực hiện hành động; NULL nếu là system/background process."
+      },
+      {
+        "name": "action",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Tên hành động được audit, ví dụ ACTIVATE_MODEL, RETRY_INGESTION, UPDATE_SETTING."
+      },
+      {
+        "name": "entity_type",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Loại đối tượng bị tác động, ví dụ MODEL, DATA_SOURCE, SETTING."
+      },
+      {
+        "name": "entity_id",
+        "type": "VARCHAR(200)",
+        "length": "200",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "ID của đối tượng bị tác động, lưu dạng text để hỗ trợ nhiều kiểu PK."
+      },
+      {
+        "name": "old_value",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Snapshot JSONB của dữ liệu trước thay đổi khi cần."
+      },
+      {
+        "name": "new_value",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Snapshot JSONB của dữ liệu sau thay đổi khi cần."
+      },
+      {
+        "name": "ip_address",
+        "type": "INET",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Địa chỉ IP client; PostgreSQL INET."
+      },
+      {
+        "name": "user_agent",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thông tin trình duyệt/app gửi request, phục vụ debug/truy vết."
+      },
+      {
+        "name": "correlation_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "ID dùng liên kết nhiều log/request trong cùng một flow."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "system_settings",
+    "group": "01. Auth & User / Xác thực và người dùng",
+    "purpose": "Cấu hình hệ thống có thể thay đổi mà không hard-code.",
+    "fields": [
+      {
+        "name": "key",
+        "type": "VARCHAR(150)",
+        "length": "150",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa cấu hình duy nhất, ví dụ market_data.max_delay_minutes."
+      },
+      {
+        "name": "value",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Giá trị cấu hình dạng JSONB để hỗ trợ boolean/number/object/list."
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mô tả bổ sung."
+      },
+      {
+        "name": "is_secret",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "Đánh dấu cấu hình nhạy cảm; không nên dùng bảng này để lưu secret plaintext."
+      },
+      {
+        "name": "updated_by_user_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES users(id); ON DELETE SET NULL",
+        "description": "FK tới users.id - người cập nhật cấu hình gần nhất."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "data_lineage_events",
+    "group": "01. Auth & User / Xác thực và người dùng",
+    "purpose": "Dấu vết dữ liệu từ nguồn đến báo cáo và dự báo.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "BIGSERIAL",
+        "length": "-",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "from_layer",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; CHECK (from_layer IN ('SOURCE','RAW','CLEAN','FEATURE','DATASET','MODEL','PREDICTION','REPORT'))",
+        "description": "Lớp dữ liệu đầu vào của lineage event."
+      },
+      {
+        "name": "from_entity_type",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Loại entity nguồn."
+      },
+      {
+        "name": "from_entity_id",
+        "type": "VARCHAR(200)",
+        "length": "200",
+        "constraint": "NOT NULL",
+        "description": "ID entity nguồn."
+      },
+      {
+        "name": "to_layer",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; CHECK (to_layer IN ('RAW','CLEAN','FEATURE','DATASET','MODEL','PREDICTION','REPORT'))",
+        "description": "Lớp dữ liệu đầu ra."
+      },
+      {
+        "name": "to_entity_type",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Loại entity đích."
+      },
+      {
+        "name": "to_entity_id",
+        "type": "VARCHAR(200)",
+        "length": "200",
+        "constraint": "NOT NULL",
+        "description": "ID entity đích."
+      },
+      {
+        "name": "transformation",
+        "type": "VARCHAR(200)",
+        "length": "200",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Tên bước transform/mapping."
+      },
+      {
+        "name": "metadata",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Metadata lineage bổ sung."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "companies",
+    "group": "02. Company & Security Master / Danh mục doanh nghiệp và chứng khoán",
+    "purpose": "Thông tin định danh và hồ sơ doanh nghiệp.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "tax_code",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mã số thuế doanh nghiệp nếu có."
+      },
+      {
+        "name": "company_code",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mã nội bộ/canonical của doanh nghiệp."
+      },
+      {
+        "name": "legal_name",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NOT NULL",
+        "description": "Tên pháp lý đầy đủ."
+      },
+      {
+        "name": "short_name",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Tên viết tắt."
+      },
+      {
+        "name": "english_name",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Tên tiếng Anh."
+      },
+      {
+        "name": "industry_code",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mã ngành chuẩn hóa."
+      },
+      {
+        "name": "industry_name",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Tên ngành."
+      },
+      {
+        "name": "sector_name",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Tên sector/lĩnh vực cấp cao hơn."
+      },
+      {
+        "name": "website",
+        "type": "VARCHAR(500)",
+        "length": "500",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Website chính thức."
+      },
+      {
+        "name": "headquarters",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Địa chỉ trụ sở chính; không phải tên chủ tịch/CEO."
+      },
+      {
+        "name": "founded_date",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày thành lập."
+      },
+      {
+        "name": "listing_status",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; DEFAULT 'LISTED'; CHECK (listing_status IN ('LISTED','UNLISTED','DELISTED','SUSPENDED'))",
+        "description": "Trạng thái niêm yết tổng quát."
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mô tả doanh nghiệp."
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT TRUE",
+        "description": "Đánh dấu record đang được hệ thống sử dụng."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "securities",
+    "group": "02. Company & Security Master / Danh mục doanh nghiệp và chứng khoán",
+    "purpose": "Mã chứng khoán và giấy tờ có giá của doanh nghiệp.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "company_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES companies(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "Doanh nghiệp sở hữu/phát hành mã chứng khoán."
+      },
+      {
+        "name": "symbol",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL",
+        "description": "Mã chứng khoán/ticker, ví dụ FPT, VNM."
+      },
+      {
+        "name": "exchange",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; CHECK (exchange IN ('HOSE','HNX','UPCOM','OTC','OTHER'))",
+        "description": "Sàn giao dịch: HOSE/HNX/UPCOM/OTC/OTHER."
+      },
+      {
+        "name": "security_type",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; DEFAULT 'STOCK'; CHECK (security_type IN ('STOCK','ETF','FUND','BOND','WARRANT','OTHER'))",
+        "description": "Loại chứng khoán: STOCK/ETF/FUND/BOND/WARRANT/OTHER."
+      },
+      {
+        "name": "isin",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mã định danh chứng khoán quốc tế ISIN; có thể NULL."
+      },
+      {
+        "name": "currency",
+        "type": "CHAR(3)",
+        "length": "3",
+        "constraint": "NOT NULL; DEFAULT 'VND'",
+        "description": "Đồng tiền định giá, thường là VND."
+      },
+      {
+        "name": "listed_date",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày bắt đầu niêm yết."
+      },
+      {
+        "name": "delisted_date",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày hủy niêm yết; NULL nếu vẫn giao dịch."
+      },
+      {
+        "name": "shares_outstanding",
+        "type": "NUMERIC(24,4)",
+        "length": "24,4",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Số cổ phiếu đang lưu hành tại thời điểm record master hiện tại; nếu cần lịch sử nên tách bảng history ở phiên bản sau."
+      },
+      {
+        "name": "par_value",
+        "type": "NUMERIC(24,4)",
+        "length": "24,4",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mệnh giá chứng khoán/cổ phiếu, khác với giá thị trường."
+      },
+      {
+        "name": "is_primary",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT TRUE",
+        "description": "Đánh dấu đây là mã giao dịch chính của company."
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT TRUE",
+        "description": "Mã hiện còn được hệ thống theo dõi."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "company_aliases",
+    "group": "02. Company & Security Master / Danh mục doanh nghiệp và chứng khoán",
+    "purpose": "Tên gọi khác phục vụ tìm kiếm và mapping nhiều nguồn.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "BIGSERIAL",
+        "length": "-",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "company_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES companies(id); ON DELETE CASCADE; NOT NULL",
+        "description": "Company canonical mà alias thuộc về."
+      },
+      {
+        "name": "alias",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NOT NULL",
+        "description": "Tên gọi khác/biến thể tên có thể xuất hiện khi người dùng tìm kiếm hoặc từ source."
+      },
+      {
+        "name": "alias_type",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; DEFAULT 'OTHER'; CHECK (alias_type IN ('SHORT_NAME','FORMER_NAME','ENGLISH_NAME','NEWS_ALIAS','OTHER'))",
+        "description": "Loại alias: tên viết tắt, tên cũ, tiếng Anh, tên dùng trong news..."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "data_sources",
+    "group": "03. Source, Ingestion & Raw / Nguồn, thu thập và dữ liệu thô",
+    "purpose": "Danh mục nguồn dữ liệu bên ngoài hoặc nội bộ.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "BIGSERIAL",
+        "length": "-",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(80)",
+        "length": "80",
+        "constraint": "NOT NULL; UNIQUE",
+        "description": "Mã nguồn duy nhất, ví dụ VNSTOCK/HOSE/HNX."
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(200)",
+        "length": "200",
+        "constraint": "NOT NULL",
+        "description": "Tên hiển thị của nguồn."
+      },
+      {
+        "name": "source_type",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; CHECK (source_type IN ('API','LIBRARY','WEB','RSS','FILE','MANUAL','OTHER'))",
+        "description": "Kiểu nguồn: API/LIBRARY/WEB/RSS/FILE/MANUAL/OTHER."
+      },
+      {
+        "name": "base_url",
+        "type": "VARCHAR(1000)",
+        "length": "1000",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Base URL nếu nguồn có endpoint/web."
+      },
+      {
+        "name": "provider",
+        "type": "VARCHAR(200)",
+        "length": "200",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Tên nhà cung cấp."
+      },
+      {
+        "name": "priority",
+        "type": "SMALLINT",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT 100",
+        "description": "Độ ưu tiên khi reconcile/chọn canonical; số nhỏ ưu tiên cao hơn."
+      },
+      {
+        "name": "is_official",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "Nguồn có phải nguồn chính thức/authoritative hay không."
+      },
+      {
+        "name": "license_status",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; DEFAULT 'UNKNOWN'; CHECK (license_status IN ('UNKNOWN','FREE','LICENSED','RESTRICTED','INTERNAL'))",
+        "description": "Trạng thái quyền sử dụng dữ liệu."
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT TRUE",
+        "description": "Bật/tắt nguồn."
+      },
+      {
+        "name": "rate_limit_note",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ghi chú quota/rate-limit."
+      },
+      {
+        "name": "terms_note",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ghi chú điều khoản sử dụng/copyright."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "ingestion_jobs",
+    "group": "03. Source, Ingestion & Raw / Nguồn, thu thập và dữ liệu thô",
+    "purpose": "Cấu hình job thu thập dữ liệu định kỳ hoặc thủ công.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "data_source_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_sources(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "FK tới data_sources.id - nguồn mà job sẽ gọi."
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(120)",
+        "length": "120",
+        "constraint": "NOT NULL; UNIQUE",
+        "description": "Mã job duy nhất."
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NOT NULL",
+        "description": "Tên mô tả job."
+      },
+      {
+        "name": "dataset_type",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NOT NULL; CHECK (dataset_type IN ( 'COMPANY','SECURITY','FINANCIAL_STATEMENT','FINANCIAL_METRIC', 'MARKE...)",
+        "description": "Loại dữ liệu job thu thập."
+      },
+      {
+        "name": "cron_expression",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Lịch chạy tự động của job (cron). NULL nếu job chỉ chạy manual/API."
+      },
+      {
+        "name": "parameters",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Cấu hình mặc định linh hoạt của job dạng JSONB, ví dụ symbol, window, page_size. Code đọc cấu hình này rồi map vào query/header/body tùy provider."
+      },
+      {
+        "name": "max_retries",
+        "type": "SMALLINT",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT 3; CHECK (max_retries >= 0)",
+        "description": "Số lần retry tối đa."
+      },
+      {
+        "name": "timeout_seconds",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT 120; CHECK (timeout_seconds > 0)",
+        "description": "Timeout cho một lần fetch/xử lý."
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT TRUE",
+        "description": "Bật/tắt job."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "ingestion_runs",
+    "group": "03. Source, Ingestion & Raw / Nguồn, thu thập và dữ liệu thô",
+    "purpose": "Nhật ký chi tiết từng lần thực thi ingestion.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "ingestion_job_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES ingestion_jobs(id); ON DELETE SET NULL",
+        "description": "FK tới ingestion_jobs.id - job cấu hình tạo ra lần chạy này."
+      },
+      {
+        "name": "data_source_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_sources(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "FK tới data_sources.id - nguồn thực tế của lần gọi."
+      },
+      {
+        "name": "trigger_type",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; DEFAULT 'SCHEDULED'; CHECK (trigger_type IN ('SCHEDULED','MANUAL','RETRY','BACKFILL','API'))",
+        "description": "Cách run được kích hoạt: scheduled/manual/retry/backfill/API."
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; DEFAULT 'RUNNING'; CHECK (status IN ('PENDING','RUNNING','SUCCESS','PARTIAL_SUCCESS','FAILED','CANCELLED'))",
+        "description": "Trạng thái run."
+      },
+      {
+        "name": "started_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm bắt đầu."
+      },
+      {
+        "name": "finished_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm kết thúc."
+      },
+      {
+        "name": "requested_by_user_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES users(id); ON DELETE SET NULL",
+        "description": "FK tới users.id - user kích hoạt manual/API; NULL nếu scheduler."
+      },
+      {
+        "name": "request_query_params",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Query parameters thực tế gửi tới provider, lưu JSONB."
+      },
+      {
+        "name": "request_method",
+        "type": "VARCHAR(10)",
+        "length": "10",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "HTTP method thực tế, ví dụ GET/POST."
+      },
+      {
+        "name": "request_url",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "URL endpoint thực tế được gọi trong run."
+      },
+      {
+        "name": "request_headers",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Headers phục vụ truy vết; phải mask Authorization/API key/token trước khi lưu."
+      },
+      {
+        "name": "request_body",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Request body thực tế nếu provider dùng POST/JSON."
+      },
+      {
+        "name": "response_http_status",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "HTTP status của lần fetch. 2xx mới đủ điều kiện tạo raw_payload."
+      },
+      {
+        "name": "response_content_type",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "MIME/content type của response, ví dụ application/json."
+      },
+      {
+        "name": "response_headers",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Response headers đã lọc/mask thông tin nhạy cảm."
+      },
+      {
+        "name": "response_snapshot",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Snapshot/diagnostic response (đặc biệt error body). Full successful payload được lưu tại raw_payloads để tránh duplicate lớn."
+      },
+      {
+        "name": "response_text",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Response text khi không phải JSON hoặc thông tin lỗi từ provider."
+      },
+      {
+        "name": "fetched_count",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT 0; CHECK (fetched_count >= 0)",
+        "description": "Số record/payload lấy được."
+      },
+      {
+        "name": "inserted_count",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT 0; CHECK (inserted_count >= 0)",
+        "description": "Số record mới được insert."
+      },
+      {
+        "name": "updated_count",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT 0; CHECK (updated_count >= 0)",
+        "description": "Số record được cập nhật/version mới."
+      },
+      {
+        "name": "rejected_count",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT 0; CHECK (rejected_count >= 0)",
+        "description": "Số record bị reject/quarantine."
+      },
+      {
+        "name": "error_count",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT 0; CHECK (error_count >= 0)",
+        "description": "Số lỗi trong run."
+      },
+      {
+        "name": "error_message",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thông báo lỗi tổng quát nếu có."
+      },
+      {
+        "name": "metadata",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Metadata bổ sung của run."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "raw_payloads",
+    "group": "03. Source, Ingestion & Raw / Nguồn, thu thập và dữ liệu thô",
+    "purpose": "Raw response bất biến sau khi fetch thành công.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "ingestion_run_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES ingestion_runs(id); ON DELETE CASCADE; NOT NULL",
+        "description": "Run tạo raw payload."
+      },
+      {
+        "name": "data_source_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_sources(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "FK tới data_sources.id - nguồn của payload thành công."
+      },
+      {
+        "name": "external_key",
+        "type": "VARCHAR(500)",
+        "length": "500",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Khóa/ID bên source nếu có."
+      },
+      {
+        "name": "entity_type",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NOT NULL",
+        "description": "Loại entity raw: price/news/statement..."
+      },
+      {
+        "name": "source_symbol",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mã/ticker đã dùng ở request hoặc xuất hiện trong payload (ví dụ FPT). Chỉ phục vụ trace source."
+      },
+      {
+        "name": "security_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES securities(id); ON DELETE SET NULL",
+        "description": "FK canonical tới securities.id nếu đã map được symbol nguồn về security trong hệ thống."
+      },
+      {
+        "name": "source_url",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "URL gốc của dữ liệu."
+      },
+      {
+        "name": "content_type",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "MIME/content type của payload thành công, ví dụ application/json hoặc text/html."
+      },
+      {
+        "name": "payload",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "JSON raw dạng JSONB nếu source trả structured data."
+      },
+      {
+        "name": "raw_text",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Nội dung raw text khi không phải JSON."
+      },
+      {
+        "name": "checksum_sha256",
+        "type": "CHAR(64)",
+        "length": "64",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Hash SHA-256 để kiểm tra integrity/dedup."
+      },
+      {
+        "name": "fetched_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm hệ thống lấy dữ liệu."
+      },
+      {
+        "name": "published_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm source công bố nếu biết."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "data_versions",
+    "group": "04. Version, Validation & Quarantine / Phiên bản, kiểm tra và cách ly",
+    "purpose": "Phiên bản clean/canonical sau khi validation đạt.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "data_domain",
+        "type": "VARCHAR(150)",
+        "length": "150",
+        "constraint": "NOT NULL",
+        "description": "Tên nhóm clean data được version hóa, ví dụ FINANCIAL_STATEMENT, MARKET_PRICE, FINANCIAL_METRIC; không phải ML dataset."
+      },
+      {
+        "name": "version_code",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Mã version duy nhất trong data_domain, ví dụ FINANCIAL_STATEMENT-FPT-2026Q2-v2."
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; DEFAULT 'ACTIVE'; CHECK (status IN ('ACTIVE','SUPERSEDED','ARCHIVED'))",
+        "description": "Lifecycle của VERSION HỢP LỆ. Validation fail không tạo valid data_version."
+      },
+      {
+        "name": "parent_data_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_versions(id); ON DELETE SET NULL",
+        "description": "FK self-reference tới phiên bản hợp lệ trước đó nếu version này thay thế/cập nhật."
+      },
+      {
+        "name": "ingestion_run_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES ingestion_runs(id); ON DELETE SET NULL",
+        "description": "Run tạo ra version này."
+      },
+      {
+        "name": "effective_from",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm version có hiệu lực."
+      },
+      {
+        "name": "effective_to",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm hết hiệu lực."
+      },
+      {
+        "name": "row_count",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "CHECK (row_count IS NULL OR row_count >= 0)",
+        "description": "Số dòng clean/canonical đã được chấp nhận trong version sau validation."
+      },
+      {
+        "name": "checksum_sha256",
+        "type": "CHAR(64)",
+        "length": "64",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Hash đại diện nội dung/version."
+      },
+      {
+        "name": "notes",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ghi chú về phiên bản/revision."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "activated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm version được ACTIVE."
+      }
+    ]
+  },
+  {
+    "name": "validation_rules",
+    "group": "04. Version, Validation & Quarantine / Phiên bản, kiểm tra và cách ly",
+    "purpose": "Danh mục rule kiểm tra chất lượng dữ liệu.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "BIGSERIAL",
+        "length": "-",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(120)",
+        "length": "120",
+        "constraint": "NOT NULL; UNIQUE",
+        "description": "Mã validation rule duy nhất."
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NOT NULL",
+        "description": "Tên rule."
+      },
+      {
+        "name": "data_domain",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NOT NULL",
+        "description": "Nhóm dữ liệu/entity rule áp dụng, ví dụ MARKET_PRICE/FINANCIAL_STATEMENT/NEWS."
+      },
+      {
+        "name": "severity",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; DEFAULT 'ERROR'; CHECK (severity IN ('INFO','WARNING','ERROR','CRITICAL'))",
+        "description": "Mức nghiêm trọng."
+      },
+      {
+        "name": "rule_type",
+        "type": "VARCHAR(40)",
+        "length": "40",
+        "constraint": "NOT NULL; CHECK (rule_type IN ( 'NOT_NULL','RANGE','UNIQUE','REFERENTIAL','FRESHNESS','RECONCILIATION','...)",
+        "description": "Loại kiểm tra: null/range/unique/freshness/business..."
+      },
+      {
+        "name": "executor_key",
+        "type": "VARCHAR(120)",
+        "length": "120",
+        "constraint": "NOT NULL",
+        "description": "Khóa ánh xạ tới implementation validator trong code, ví dụ PRICE_OHLC_RANGE hoặc FIN_STATEMENT_BALANCE. Bảng cấu hình rule; code thực thi rule."
+      },
+      {
+        "name": "rule_config",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Tham số cấu hình cho implementation trong code, ví dụ min/max/required_fields/tolerance."
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mô tả business rule."
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT TRUE",
+        "description": "Bật/tắt rule."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "validation_results",
+    "group": "04. Version, Validation & Quarantine / Phiên bản, kiểm tra và cách ly",
+    "purpose": "Kết quả PASS, FAIL hoặc SKIP của từng rule.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "validation_rule_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES validation_rules(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "Rule đã được chạy."
+      },
+      {
+        "name": "ingestion_run_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES ingestion_runs(id); ON DELETE CASCADE",
+        "description": "Run liên quan nếu validation diễn ra trong ingestion."
+      },
+      {
+        "name": "raw_payload_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES raw_payloads(id); ON DELETE CASCADE",
+        "description": "Raw payload được kiểm tra trong ingestion, nếu có."
+      },
+      {
+        "name": "data_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_versions(id); ON DELETE CASCADE",
+        "description": "Version clean liên quan nếu validation/revalidation chạy sau khi đã có version; thường NULL ở bước kiểm raw ban đầu."
+      },
+      {
+        "name": "entity_type",
+        "type": "VARCHAR(80)",
+        "length": "80",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Loại entity được kiểm tra."
+      },
+      {
+        "name": "entity_key",
+        "type": "VARCHAR(500)",
+        "length": "500",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Khóa business/entity để truy record."
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; CHECK (status IN ('PASS','FAIL','SKIP'))",
+        "description": "PASS/FAIL/SKIP."
+      },
+      {
+        "name": "observed_value",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị quan sát được khi validation."
+      },
+      {
+        "name": "expected_value",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị/kỳ vọng của rule."
+      },
+      {
+        "name": "message",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thông báo chi tiết."
+      },
+      {
+        "name": "checked_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm chạy validation."
+      }
+    ]
+  },
+  {
+    "name": "quarantined_records",
+    "group": "04. Version, Validation & Quarantine / Phiên bản, kiểm tra và cách ly",
+    "purpose": "Dữ liệu lỗi bị cách ly khỏi clean database.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "ingestion_run_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES ingestion_runs(id); ON DELETE SET NULL",
+        "description": "Run phát sinh dữ liệu bị quarantine."
+      },
+      {
+        "name": "raw_payload_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES raw_payloads(id); ON DELETE SET NULL",
+        "description": "Raw payload gốc."
+      },
+      {
+        "name": "data_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_versions(id); ON DELETE SET NULL",
+        "description": "Version liên quan nếu đã tới bước versioning."
+      },
+      {
+        "name": "entity_type",
+        "type": "VARCHAR(80)",
+        "length": "80",
+        "constraint": "NOT NULL",
+        "description": "Loại record lỗi."
+      },
+      {
+        "name": "entity_key",
+        "type": "VARCHAR(500)",
+        "length": "500",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Khóa record để tìm lại."
+      },
+      {
+        "name": "reason_code",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Mã nguyên nhân quarantine."
+      },
+      {
+        "name": "reason_detail",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mô tả lỗi chi tiết."
+      },
+      {
+        "name": "severity",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; DEFAULT 'ERROR'; CHECK (severity IN ('WARNING','ERROR','CRITICAL'))",
+        "description": "Mức nghiêm trọng."
+      },
+      {
+        "name": "payload_snapshot",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Snapshot JSONB phục vụ review."
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; DEFAULT 'OPEN'; CHECK (status IN ('OPEN','RESOLVED','IGNORED','REPROCESSED'))",
+        "description": "OPEN/RESOLVED/IGNORED/REPROCESSED."
+      },
+      {
+        "name": "resolved_by_user_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES users(id); ON DELETE SET NULL",
+        "description": "FK tới users.id - người xử lý record quarantine."
+      },
+      {
+        "name": "resolved_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm xử lý."
+      },
+      {
+        "name": "resolution_note",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ghi chú cách xử lý."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "financial_periods",
+    "group": "05. Financial Statements / Báo cáo tài chính",
+    "purpose": "Chuẩn hóa kỳ báo cáo tài chính.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "fiscal_year",
+        "type": "SMALLINT",
+        "length": "-",
+        "constraint": "NOT NULL; CHECK (fiscal_year BETWEEN 1990 AND 2200)",
+        "description": "Năm tài chính."
+      },
+      {
+        "name": "period_type",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; CHECK (period_type IN ( 'Q1','Q2','Q3','Q4','FY','TTM','M1','M2','M3','M4','M5','M6','M7','M8'...)",
+        "description": "Loại kỳ: Q1-Q4/FY/TTM hoặc tháng."
+      },
+      {
+        "name": "start_date",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày bắt đầu kỳ nếu xác định được."
+      },
+      {
+        "name": "end_date",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Ngày kết thúc kỳ."
+      },
+      {
+        "name": "report_date",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày báo cáo/công bố theo canonical mapping."
+      },
+      {
+        "name": "is_audited_period",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "Kỳ có báo cáo kiểm toán hay không."
+      }
+    ]
+  },
+  {
+    "name": "financial_statements",
+    "group": "05. Financial Statements / Báo cáo tài chính",
+    "purpose": "Header báo cáo tài chính theo nguồn và revision.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "company_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES companies(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "Doanh nghiệp của BCTC."
+      },
+      {
+        "name": "security_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES securities(id); ON DELETE SET NULL",
+        "description": "Mã chứng khoán liên quan nếu cần."
+      },
+      {
+        "name": "financial_period_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES financial_periods(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "FK tới financial_periods.id - kỳ tài chính của báo cáo."
+      },
+      {
+        "name": "statement_type",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; CHECK (statement_type IN ('BALANCE_SHEET','INCOME_STATEMENT','CASH_FLOW'))",
+        "description": "BALANCE_SHEET/INCOME_STATEMENT/CASH_FLOW."
+      },
+      {
+        "name": "report_scope",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; DEFAULT 'CONSOLIDATED'; CHECK (report_scope IN ('CONSOLIDATED','SEPARATE','UNKNOWN'))",
+        "description": "Báo cáo hợp nhất/riêng lẻ/không xác định."
+      },
+      {
+        "name": "accounting_standard",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Chuẩn kế toán nếu source cung cấp."
+      },
+      {
+        "name": "currency",
+        "type": "CHAR(3)",
+        "length": "3",
+        "constraint": "NOT NULL; DEFAULT 'VND'",
+        "description": "Đồng tiền của báo cáo."
+      },
+      {
+        "name": "unit_scale",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT 1; CHECK (unit_scale > 0)",
+        "description": "Hệ số đơn vị: 1/1.000/1.000.000..."
+      },
+      {
+        "name": "audited",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "BCTC đã kiểm toán hay chưa."
+      },
+      {
+        "name": "revision_no",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT 1; CHECK (revision_no > 0)",
+        "description": "Số thứ tự revision."
+      },
+      {
+        "name": "is_restated",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "Có phải bản điều chỉnh/restatement không."
+      },
+      {
+        "name": "data_source_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_sources(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "FK tới data_sources.id - nguồn BCTC."
+      },
+      {
+        "name": "raw_payload_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES raw_payloads(id); ON DELETE SET NULL",
+        "description": "Raw evidence gốc."
+      },
+      {
+        "name": "data_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_versions(id); ON DELETE SET NULL",
+        "description": "Version clean data."
+      },
+      {
+        "name": "published_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm công bố."
+      },
+      {
+        "name": "effective_from",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm bản revision này bắt đầu hiệu lực."
+      },
+      {
+        "name": "effective_to",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Hết hiệu lực khi bị bản mới thay thế."
+      },
+      {
+        "name": "is_current",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT TRUE",
+        "description": "Bản hiện hành của nguồn."
+      },
+      {
+        "name": "is_canonical",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "Bản canonical được hệ thống chọn để serve."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "financial_statement_items",
+    "group": "05. Financial Statements / Báo cáo tài chính",
+    "purpose": "Các dòng chỉ tiêu chi tiết trong báo cáo tài chính.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "financial_statement_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES financial_statements(id); ON DELETE CASCADE; NOT NULL",
+        "description": "FK tới financial_statements.id - báo cáo cha chứa dòng chỉ tiêu này."
+      },
+      {
+        "name": "item_code",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Mã chỉ tiêu chuẩn hóa."
+      },
+      {
+        "name": "item_name",
+        "type": "VARCHAR(500)",
+        "length": "500",
+        "constraint": "NOT NULL",
+        "description": "Tên chỉ tiêu."
+      },
+      {
+        "name": "parent_item_code",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mã dòng cha nếu BCTC dạng cây."
+      },
+      {
+        "name": "value",
+        "type": "NUMERIC(38,8)",
+        "length": "38,8",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị số đã normalize."
+      },
+      {
+        "name": "raw_value",
+        "type": "VARCHAR(200)",
+        "length": "200",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị nguyên bản dưới dạng text nếu cần đối chiếu."
+      },
+      {
+        "name": "unit",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Đơn vị của dòng nếu khác header."
+      },
+      {
+        "name": "display_order",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thứ tự hiển thị."
+      },
+      {
+        "name": "is_total",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "Đánh dấu dòng tổng."
+      },
+      {
+        "name": "metadata",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Metadata mở rộng của dòng."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "metric_definitions",
+    "group": "06. Financial Metrics / Chỉ số tài chính",
+    "purpose": "Từ điển chỉ số tài chính và công thức chuẩn hóa.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "BIGSERIAL",
+        "length": "-",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL; UNIQUE",
+        "description": "Mã metric canonical như ROE/PE/EPS."
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NOT NULL",
+        "description": "Tên metric."
+      },
+      {
+        "name": "category",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NOT NULL; CHECK (category IN ( 'VALUATION','PROFITABILITY','LIQUIDITY','LEVERAGE','EFFICIENCY','GROWTH',...)",
+        "description": "Nhóm metric: valuation/profitability/liquidity..."
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giải thích business meaning."
+      },
+      {
+        "name": "formula",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Công thức nếu hệ thống tự tính."
+      },
+      {
+        "name": "unit",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Đơn vị %, x, VND/share..."
+      },
+      {
+        "name": "higher_is_better",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Gợi ý hướng diễn giải; NULL với metric không có hướng tốt/xấu cố định."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "financial_metrics",
+    "group": "06. Financial Metrics / Chỉ số tài chính",
+    "purpose": "Giá trị chỉ số theo doanh nghiệp, kỳ và nguồn.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "company_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES companies(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "Doanh nghiệp của metric."
+      },
+      {
+        "name": "security_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES securities(id); ON DELETE SET NULL",
+        "description": "Security nếu metric phụ thuộc mã/market."
+      },
+      {
+        "name": "financial_period_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES financial_periods(id); ON DELETE SET NULL",
+        "description": "FK tới financial_periods.id nếu metric theo kỳ."
+      },
+      {
+        "name": "metric_definition_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES metric_definitions(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "Metric được định nghĩa trong metric_definitions."
+      },
+      {
+        "name": "as_of_date",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Ngày hiệu lực/cutoff của giá trị metric."
+      },
+      {
+        "name": "value",
+        "type": "NUMERIC(38,10)",
+        "length": "38,10",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị số canonical."
+      },
+      {
+        "name": "value_text",
+        "type": "VARCHAR(500)",
+        "length": "500",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị dạng text nếu không phù hợp numeric."
+      },
+      {
+        "name": "data_source_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_sources(id); ON DELETE SET NULL",
+        "description": "FK tới data_sources.id nếu metric do nguồn cung cấp trực tiếp."
+      },
+      {
+        "name": "raw_payload_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES raw_payloads(id); ON DELETE SET NULL",
+        "description": "Raw evidence."
+      },
+      {
+        "name": "data_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_versions(id); ON DELETE SET NULL",
+        "description": "Clean data version."
+      },
+      {
+        "name": "is_derived",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "TRUE nếu hệ thống tự tính từ input khác."
+      },
+      {
+        "name": "is_canonical",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "Bản được chọn canonical."
+      },
+      {
+        "name": "calculation_version",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Version công thức/code nếu derived."
+      },
+      {
+        "name": "quality_status",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; DEFAULT 'VALID'; CHECK (quality_status IN ('VALID','WARNING','REJECTED'))",
+        "description": "VALID/WARNING/REJECTED."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "market_prices",
+    "group": "07. Market Data / Dữ liệu thị trường",
+    "purpose": "Chuỗi OHLCV của từng mã chứng khoán.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "BIGSERIAL",
+        "length": "-",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "security_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES securities(id); ON DELETE CASCADE; NOT NULL",
+        "description": "Mã chứng khoán."
+      },
+      {
+        "name": "price_timestamp",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Mốc thời gian của candle/snapshot giá. Mục tiêu V1: mỗi 15 phút khi nguồn cho phép."
+      },
+      {
+        "name": "interval_code",
+        "type": "VARCHAR(10)",
+        "length": "10",
+        "constraint": "NOT NULL; DEFAULT '15m'",
+        "description": "Khung dữ liệu: 15m mặc định; có thể dùng 1d cho candle cuối ngày nếu cần."
+      },
+      {
+        "name": "open_price",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá mở cửa."
+      },
+      {
+        "name": "high_price",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá cao nhất."
+      },
+      {
+        "name": "low_price",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá thấp nhất."
+      },
+      {
+        "name": "close_price",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NOT NULL; CHECK (close_price >= 0)",
+        "description": "Giá đóng cửa."
+      },
+      {
+        "name": "adjusted_close",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá đóng cửa điều chỉnh nếu có."
+      },
+      {
+        "name": "reference_price",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá tham chiếu."
+      },
+      {
+        "name": "ceiling_price",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trần."
+      },
+      {
+        "name": "floor_price",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá sàn."
+      },
+      {
+        "name": "volume",
+        "type": "NUMERIC(30,4)",
+        "length": "30,4",
+        "constraint": "CHECK (volume IS NULL OR volume >= 0)",
+        "description": "Khối lượng giao dịch."
+      },
+      {
+        "name": "trading_value",
+        "type": "NUMERIC(30,4)",
+        "length": "30,4",
+        "constraint": "CHECK (trading_value IS NULL OR trading_value >= 0)",
+        "description": "Giá trị giao dịch."
+      },
+      {
+        "name": "foreign_buy_volume",
+        "type": "NUMERIC(30,4)",
+        "length": "30,4",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Khối lượng mua nước ngoài."
+      },
+      {
+        "name": "foreign_sell_volume",
+        "type": "NUMERIC(30,4)",
+        "length": "30,4",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Khối lượng bán nước ngoài."
+      },
+      {
+        "name": "data_source_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_sources(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "FK tới data_sources.id - nguồn dữ liệu thị trường."
+      },
+      {
+        "name": "raw_payload_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES raw_payloads(id); ON DELETE SET NULL",
+        "description": "Raw evidence."
+      },
+      {
+        "name": "data_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_versions(id); ON DELETE SET NULL",
+        "description": "Clean data version."
+      },
+      {
+        "name": "is_canonical",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "Bản giá canonical cho security + timestamp + interval."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "market_indices",
+    "group": "07. Market Data / Dữ liệu thị trường",
+    "purpose": "Danh mục benchmark như VNINDEX và VN30.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NOT NULL; UNIQUE",
+        "description": "Mã chỉ số như VNINDEX/VN30."
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(200)",
+        "length": "200",
+        "constraint": "NOT NULL",
+        "description": "Tên chỉ số."
+      },
+      {
+        "name": "exchange",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Sàn/thị trường liên quan."
+      },
+      {
+        "name": "currency",
+        "type": "CHAR(3)",
+        "length": "3",
+        "constraint": "NOT NULL; DEFAULT 'VND'",
+        "description": "Đồng tiền/đơn vị quy ước."
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mô tả chỉ số."
+      },
+      {
+        "name": "is_benchmark",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "TRUE nếu dùng làm benchmark Local AI."
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT TRUE",
+        "description": "Đang được hệ thống sử dụng."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "index_prices",
+    "group": "07. Market Data / Dữ liệu thị trường",
+    "purpose": "Chuỗi giá trị của các chỉ số thị trường.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "BIGSERIAL",
+        "length": "-",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "market_index_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES market_indices(id); ON DELETE CASCADE; NOT NULL",
+        "description": "FK tới market_indices.id - chỉ số thị trường như VNINDEX/VN30."
+      },
+      {
+        "name": "price_timestamp",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Mốc thời gian của index candle/snapshot; có thể align 15m với market_prices."
+      },
+      {
+        "name": "interval_code",
+        "type": "VARCHAR(10)",
+        "length": "10",
+        "constraint": "NOT NULL; DEFAULT '15m'",
+        "description": "Khung thời gian của index price, mặc định 15m khi source hỗ trợ."
+      },
+      {
+        "name": "open_value",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị mở cửa của index."
+      },
+      {
+        "name": "high_value",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị cao nhất."
+      },
+      {
+        "name": "low_value",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị thấp nhất."
+      },
+      {
+        "name": "close_value",
+        "type": "NUMERIC(24,6)",
+        "length": "24,6",
+        "constraint": "NOT NULL; CHECK (close_value >= 0)",
+        "description": "Giá trị đóng cửa."
+      },
+      {
+        "name": "volume",
+        "type": "NUMERIC(30,4)",
+        "length": "30,4",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Khối lượng nếu nguồn cung cấp."
+      },
+      {
+        "name": "trading_value",
+        "type": "NUMERIC(30,4)",
+        "length": "30,4",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị giao dịch nếu nguồn cung cấp."
+      },
+      {
+        "name": "data_source_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_sources(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "FK tới data_sources.id - nguồn index price."
+      },
+      {
+        "name": "raw_payload_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES raw_payloads(id); ON DELETE SET NULL",
+        "description": "Raw evidence."
+      },
+      {
+        "name": "data_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_versions(id); ON DELETE SET NULL",
+        "description": "Clean data version."
+      },
+      {
+        "name": "is_canonical",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "Bản canonical của index/date."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "security_index_memberships",
+    "group": "07. Market Data / Dữ liệu thị trường",
+    "purpose": "Lịch sử thành phần của mã trong chỉ số.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "security_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES securities(id); ON DELETE CASCADE; NOT NULL",
+        "description": "Mã chứng khoán thành viên."
+      },
+      {
+        "name": "market_index_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES market_indices(id); ON DELETE CASCADE; NOT NULL",
+        "description": "FK tới market_indices.id."
+      },
+      {
+        "name": "effective_from",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Ngày bắt đầu membership."
+      },
+      {
+        "name": "effective_to",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày kết thúc membership."
+      },
+      {
+        "name": "weight",
+        "type": "NUMERIC(12,8)",
+        "length": "12,8",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Trọng số trong chỉ số nếu có."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "macro_series",
+    "group": "08. Macro Data / Dữ liệu vĩ mô",
+    "purpose": "Danh mục chuỗi dữ liệu vĩ mô.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "data_source_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_sources(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "FK tới data_sources.id - nguồn của chuỗi vĩ mô."
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(120)",
+        "length": "120",
+        "constraint": "NOT NULL",
+        "description": "Mã series tại hệ thống/source."
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NOT NULL",
+        "description": "Tên chuỗi."
+      },
+      {
+        "name": "country_code",
+        "type": "VARCHAR(10)",
+        "length": "10",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mã quốc gia nếu có."
+      },
+      {
+        "name": "frequency",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "CHECK (frequency IN ('DAILY','WEEKLY','MONTHLY','QUARTERLY','YEARLY','OTHER'))",
+        "description": "Tần suất dữ liệu."
+      },
+      {
+        "name": "unit",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Đơn vị."
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mô tả series."
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT TRUE",
+        "description": "Bật/tắt series."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "macro_observations",
+    "group": "08. Macro Data / Dữ liệu vĩ mô",
+    "purpose": "Giá trị quan sát của chuỗi vĩ mô theo thời gian.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "BIGSERIAL",
+        "length": "-",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "macro_series_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES macro_series(id); ON DELETE CASCADE; NOT NULL",
+        "description": "FK tới macro_series.id - chuỗi vĩ mô mà observation thuộc về."
+      },
+      {
+        "name": "observation_date",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Ngày/kỳ quan sát."
+      },
+      {
+        "name": "value",
+        "type": "NUMERIC(38,10)",
+        "length": "38,10",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị numeric."
+      },
+      {
+        "name": "value_text",
+        "type": "VARCHAR(500)",
+        "length": "500",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giá trị text nếu cần."
+      },
+      {
+        "name": "raw_payload_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES raw_payloads(id); ON DELETE SET NULL",
+        "description": "Raw evidence."
+      },
+      {
+        "name": "data_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_versions(id); ON DELETE SET NULL",
+        "description": "Clean data version."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "news_articles",
+    "group": "09. News / Tin tức",
+    "purpose": "Tin tức canonical sau chuẩn hóa và khử trùng lặp.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "data_source_id",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_sources(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "FK tới data_sources.id - nguồn bài viết."
+      },
+      {
+        "name": "raw_payload_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES raw_payloads(id); ON DELETE SET NULL",
+        "description": "Raw payload gốc."
+      },
+      {
+        "name": "external_id",
+        "type": "VARCHAR(500)",
+        "length": "500",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "ID bài viết bên source."
+      },
+      {
+        "name": "canonical_url",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "URL chuẩn của bài viết."
+      },
+      {
+        "name": "url_hash",
+        "type": "CHAR(64)",
+        "length": "64",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Hash của URL để dedup."
+      },
+      {
+        "name": "title",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Tiêu đề bài viết."
+      },
+      {
+        "name": "sapo",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Đoạn mô tả/ngắn mở đầu của bài báo (sapo)."
+      },
+      {
+        "name": "content_text",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Nội dung full text chỉ lưu khi policy/terms cho phép."
+      },
+      {
+        "name": "author",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Tác giả nếu có."
+      },
+      {
+        "name": "language",
+        "type": "VARCHAR(10)",
+        "length": "10",
+        "constraint": "NOT NULL; DEFAULT 'vi'",
+        "description": "Ngôn ngữ."
+      },
+      {
+        "name": "published_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm xuất bản."
+      },
+      {
+        "name": "crawled_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm hệ thống crawl."
+      },
+      {
+        "name": "content_hash",
+        "type": "CHAR(64)",
+        "length": "64",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Hash nội dung phục vụ dedup."
+      },
+      {
+        "name": "duplicate_of_news_article_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES news_articles(id); ON DELETE SET NULL",
+        "description": "FK self-reference tới bài canonical nếu record này là duplicate."
+      },
+      {
+        "name": "dedup_status",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; DEFAULT 'UNIQUE'; CHECK (dedup_status IN ('UNIQUE','DUPLICATE','POSSIBLE_DUPLICATE'))",
+        "description": "UNIQUE/DUPLICATE/POSSIBLE_DUPLICATE."
+      },
+      {
+        "name": "is_deleted_source",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT FALSE",
+        "description": "Source đã xóa bài hay chưa."
+      },
+      {
+        "name": "metadata",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Metadata bổ sung."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm cập nhật bản ghi gần nhất."
+      }
+    ]
+  },
+  {
+    "name": "news_article_companies",
+    "group": "09. News / Tin tức",
+    "purpose": "Liên kết tin tức với doanh nghiệp và độ liên quan.",
+    "fields": [
+      {
+        "name": "news_article_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; FOREIGN KEY REFERENCES news_articles(id); ON DELETE CASCADE",
+        "description": "FK tới news_articles.id."
+      },
+      {
+        "name": "company_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; FOREIGN KEY REFERENCES companies(id); ON DELETE CASCADE",
+        "description": "Doanh nghiệp được nhắc/ảnh hưởng."
+      },
+      {
+        "name": "security_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES securities(id); ON DELETE SET NULL",
+        "description": "Security tương ứng nếu xác định được."
+      },
+      {
+        "name": "relevance_score",
+        "type": "NUMERIC(6,5)",
+        "length": "6,5",
+        "constraint": "CHECK (relevance_score IS NULL OR relevance_score BETWEEN 0 AND 1)",
+        "description": "Độ liên quan 0..1."
+      },
+      {
+        "name": "match_method",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; DEFAULT 'RULE'; CHECK (match_method IN ('RULE','NER','LLM','MANUAL'))",
+        "description": "Cách map: RULE/NER/LLM/MANUAL."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "llm_runs",
+    "group": "10. LLM Processing / Xử lý mô hình ngôn ngữ",
+    "purpose": "Nhật ký mỗi lần gọi mô hình ngôn ngữ.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "operation_type",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NOT NULL; CHECK (operation_type IN ( 'NEWS_PARSE','NEWS_SUMMARY','NEWS_CLASSIFY','FINANCIAL_EXPLAIN','RA...)",
+        "description": "Loại tác vụ LLM."
+      },
+      {
+        "name": "provider",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Nhà cung cấp LLM."
+      },
+      {
+        "name": "model_name",
+        "type": "VARCHAR(150)",
+        "length": "150",
+        "constraint": "NOT NULL",
+        "description": "Tên model được gọi."
+      },
+      {
+        "name": "prompt_version",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Phiên bản prompt/template."
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; DEFAULT 'RUNNING'; CHECK (status IN ('PENDING','RUNNING','SUCCESS','FAILED','REJECTED'))",
+        "description": "Trạng thái request."
+      },
+      {
+        "name": "input_hash",
+        "type": "CHAR(64)",
+        "length": "64",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Hash input/context giúp dedup/audit."
+      },
+      {
+        "name": "request_metadata",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Metadata request dạng JSONB."
+      },
+      {
+        "name": "response_metadata",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Metadata response dạng JSONB."
+      },
+      {
+        "name": "input_tokens",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "CHECK (input_tokens IS NULL OR input_tokens >= 0)",
+        "description": "Số token input nếu provider trả."
+      },
+      {
+        "name": "output_tokens",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "CHECK (output_tokens IS NULL OR output_tokens >= 0)",
+        "description": "Số token output."
+      },
+      {
+        "name": "latency_ms",
+        "type": "INTEGER",
+        "length": "-",
+        "constraint": "CHECK (latency_ms IS NULL OR latency_ms >= 0)",
+        "description": "Độ trễ milliseconds."
+      },
+      {
+        "name": "error_message",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Lỗi nếu request thất bại."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      },
+      {
+        "name": "finished_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm hoàn tất."
+      }
+    ]
+  },
+  {
+    "name": "news_ai_analyses",
+    "group": "10. LLM Processing / Xử lý mô hình ngôn ngữ",
+    "purpose": "Kết quả AI phân tích nội dung tin tức.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "news_article_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES news_articles(id); ON DELETE CASCADE; NOT NULL",
+        "description": "FK tới news_articles.id - bài được phân tích."
+      },
+      {
+        "name": "llm_run_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES llm_runs(id); ON DELETE SET NULL",
+        "description": "Lần gọi LLM sinh kết quả."
+      },
+      {
+        "name": "analysis_version",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Phiên bản schema/prompt phân tích."
+      },
+      {
+        "name": "summary",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Tóm tắt."
+      },
+      {
+        "name": "sentiment_label",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "CHECK (sentiment_label IS NULL OR sentiment_label IN ('POSITIVE','NEUTRAL','NEGATIVE','MIXED',...)",
+        "description": "Nhãn cảm xúc."
+      },
+      {
+        "name": "sentiment_score",
+        "type": "NUMERIC(7,6)",
+        "length": "7,6",
+        "constraint": "CHECK (sentiment_score IS NULL OR sentiment_score BETWEEN -1 AND 1)",
+        "description": "Điểm sentiment -1..1."
+      },
+      {
+        "name": "impact_direction",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "CHECK (impact_direction IS NULL OR impact_direction IN ('POSITIVE','NEUTRAL','NEGATIVE','MIXED...)",
+        "description": "Hướng ảnh hưởng."
+      },
+      {
+        "name": "impact_horizon",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "CHECK (impact_horizon IS NULL OR impact_horizon IN ('INTRADAY','SHORT_TERM','MEDIUM_TERM','LON...)",
+        "description": "Horizon ảnh hưởng."
+      },
+      {
+        "name": "confidence_score",
+        "type": "NUMERIC(6,5)",
+        "length": "6,5",
+        "constraint": "CHECK (confidence_score IS NULL OR confidence_score BETWEEN 0 AND 1)",
+        "description": "Độ tin cậy 0..1."
+      },
+      {
+        "name": "topics",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '[]'::jsonb",
+        "description": "Danh sách chủ đề dạng JSONB."
+      },
+      {
+        "name": "entities",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '[]'::jsonb",
+        "description": "Các entity được trích xuất."
+      },
+      {
+        "name": "structured_output",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "JSONB output chuẩn hóa đầy đủ."
+      },
+      {
+        "name": "quality_status",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; DEFAULT 'VALID'; CHECK (quality_status IN ('VALID','WARNING','REJECTED'))",
+        "description": "VALID/WARNING/REJECTED."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "feature_sets",
+    "group": "11. Feature, Dataset & Local AI / Đặc trưng, tập dữ liệu và AI cục bộ",
+    "purpose": "Định nghĩa bộ feature và target theo phiên bản.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(120)",
+        "length": "120",
+        "constraint": "NOT NULL",
+        "description": "Mã bộ feature."
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(255)",
+        "length": "255",
+        "constraint": "NOT NULL",
+        "description": "Tên hiển thị."
+      },
+      {
+        "name": "version",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Phiên bản."
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Mô tả."
+      },
+      {
+        "name": "feature_spec",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Định nghĩa feature/lookback/available_at dạng JSONB."
+      },
+      {
+        "name": "target_spec",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Định nghĩa target/horizon/benchmark dạng JSONB."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "datasets",
+    "group": "11. Feature, Dataset & Local AI / Đặc trưng, tập dữ liệu và AI cục bộ",
+    "purpose": "Metadata tập dữ liệu ML và temporal split.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(120)",
+        "length": "120",
+        "constraint": "NOT NULL",
+        "description": "Mã dataset."
+      },
+      {
+        "name": "version",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Phiên bản dataset."
+      },
+      {
+        "name": "feature_set_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES feature_sets(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "Feature set được dùng."
+      },
+      {
+        "name": "data_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_versions(id); ON DELETE SET NULL",
+        "description": "Data version nguồn."
+      },
+      {
+        "name": "split_strategy",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NOT NULL; DEFAULT 'TEMPORAL'; CHECK (split_strategy IN ('TEMPORAL','WALK_FORWARD','PURGED_TEMPORAL','OTHER'))",
+        "description": "Chiến lược chia temporal."
+      },
+      {
+        "name": "train_start",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày bắt đầu train."
+      },
+      {
+        "name": "train_end",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày kết thúc train."
+      },
+      {
+        "name": "validation_start",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày bắt đầu validation."
+      },
+      {
+        "name": "validation_end",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày kết thúc validation."
+      },
+      {
+        "name": "test_start",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày bắt đầu test."
+      },
+      {
+        "name": "test_end",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ngày kết thúc test."
+      },
+      {
+        "name": "row_count",
+        "type": "BIGINT",
+        "length": "-",
+        "constraint": "CHECK (row_count IS NULL OR row_count >= 0)",
+        "description": "Số sample."
+      },
+      {
+        "name": "target_name",
+        "type": "VARCHAR(150)",
+        "length": "150",
+        "constraint": "NOT NULL",
+        "description": "Tên target."
+      },
+      {
+        "name": "target_definition",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Định nghĩa target đầy đủ JSONB."
+      },
+      {
+        "name": "dataset_uri",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Vị trí artifact dataset nếu lưu file."
+      },
+      {
+        "name": "checksum_sha256",
+        "type": "CHAR(64)",
+        "length": "64",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Hash dataset."
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; DEFAULT 'DRAFT'; CHECK (status IN ('DRAFT','READY','FROZEN','ARCHIVED','REJECTED'))",
+        "description": "DRAFT/READY/FROZEN/ARCHIVED/REJECTED."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "dataset_samples",
+    "group": "11. Feature, Dataset & Local AI / Đặc trưng, tập dữ liệu và AI cục bộ",
+    "purpose": "Các mẫu, feature snapshot và ground truth.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "BIGSERIAL",
+        "length": "-",
+        "constraint": "PRIMARY KEY",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "dataset_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES datasets(id); ON DELETE CASCADE; NOT NULL",
+        "description": "Dataset cha."
+      },
+      {
+        "name": "security_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES securities(id); ON DELETE CASCADE; NOT NULL",
+        "description": "Security của sample."
+      },
+      {
+        "name": "as_of_date",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Cutoff date của sample."
+      },
+      {
+        "name": "split_name",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; CHECK (split_name IN ('TRAIN','VALIDATION','TEST','HOLDOUT'))",
+        "description": "TRAIN/VALIDATION/TEST/HOLDOUT."
+      },
+      {
+        "name": "feature_values",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Feature snapshot JSONB."
+      },
+      {
+        "name": "target_label",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Nhãn classification nếu có."
+      },
+      {
+        "name": "target_value",
+        "type": "NUMERIC(30,10)",
+        "length": "30,10",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Target numeric nếu có."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "model_versions",
+    "group": "11. Feature, Dataset & Local AI / Đặc trưng, tập dữ liệu và AI cục bộ",
+    "purpose": "Registry phiên bản model và artifact liên quan.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "model_code",
+        "type": "VARCHAR(120)",
+        "length": "120",
+        "constraint": "NOT NULL",
+        "description": "Mã logical model."
+      },
+      {
+        "name": "version",
+        "type": "VARCHAR(100)",
+        "length": "100",
+        "constraint": "NOT NULL",
+        "description": "Phiên bản model."
+      },
+      {
+        "name": "model_type",
+        "type": "VARCHAR(80)",
+        "length": "80",
+        "constraint": "NOT NULL",
+        "description": "Loại bài toán/model."
+      },
+      {
+        "name": "framework",
+        "type": "VARCHAR(80)",
+        "length": "80",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Framework ML."
+      },
+      {
+        "name": "algorithm",
+        "type": "VARCHAR(120)",
+        "length": "120",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thuật toán."
+      },
+      {
+        "name": "dataset_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES datasets(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "Dataset đã train model."
+      },
+      {
+        "name": "feature_set_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES feature_sets(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "Feature set."
+      },
+      {
+        "name": "target_name",
+        "type": "VARCHAR(150)",
+        "length": "150",
+        "constraint": "NOT NULL",
+        "description": "Tên target."
+      },
+      {
+        "name": "target_definition",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Định nghĩa target."
+      },
+      {
+        "name": "hyperparameters",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Hyperparameters JSONB."
+      },
+      {
+        "name": "artifact_uri",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Đường dẫn model artifact."
+      },
+      {
+        "name": "artifact_hash",
+        "type": "CHAR(64)",
+        "length": "64",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Hash artifact."
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; DEFAULT 'TRAINED'; CHECK (status IN ('TRAINING','TRAINED','EVALUATING','CANDIDATE','ACTIVE','REJECTED','ARCHIVED'))",
+        "description": "Lifecycle model."
+      },
+      {
+        "name": "trained_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm train xong."
+      },
+      {
+        "name": "activated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Thời điểm ACTIVE."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "model_evaluations",
+    "group": "11. Feature, Dataset & Local AI / Đặc trưng, tập dữ liệu và AI cục bộ",
+    "purpose": "Kết quả đánh giá model và so sánh baseline.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "model_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES model_versions(id); ON DELETE CASCADE; NOT NULL",
+        "description": "Model được đánh giá."
+      },
+      {
+        "name": "dataset_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES datasets(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "Dataset sử dụng để evaluate."
+      },
+      {
+        "name": "split_name",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; CHECK (split_name IN ('TRAIN','VALIDATION','TEST','HOLDOUT','WALK_FORWARD'))",
+        "description": "Split được evaluate."
+      },
+      {
+        "name": "metrics",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Các metric đánh giá JSONB."
+      },
+      {
+        "name": "confusion_matrix",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Confusion matrix nếu classification."
+      },
+      {
+        "name": "baseline_metrics",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Metric của baseline để so sánh."
+      },
+      {
+        "name": "acceptance_status",
+        "type": "VARCHAR(20)",
+        "length": "20",
+        "constraint": "NOT NULL; DEFAULT 'REVIEW'; CHECK (acceptance_status IN ('PASS','FAIL','REVIEW'))",
+        "description": "PASS/FAIL/REVIEW."
+      },
+      {
+        "name": "evaluated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm evaluate."
+      },
+      {
+        "name": "notes",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Ghi chú."
+      }
+    ]
+  },
+  {
+    "name": "predictions",
+    "group": "11. Feature, Dataset & Local AI / Đặc trưng, tập dữ liệu và AI cục bộ",
+    "purpose": "Kết quả inference có đầy đủ version và cutoff.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "model_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES model_versions(id); ON DELETE RESTRICT; NOT NULL",
+        "description": "Model tạo prediction."
+      },
+      {
+        "name": "dataset_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES datasets(id); ON DELETE SET NULL",
+        "description": "Dataset reference nếu cần replay."
+      },
+      {
+        "name": "security_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES securities(id); ON DELETE CASCADE; NOT NULL",
+        "description": "Security được dự đoán."
+      },
+      {
+        "name": "benchmark_market_index_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES market_indices(id); ON DELETE SET NULL",
+        "description": "FK tới market_indices.id - benchmark hiện tại thường là VNINDEX."
+      },
+      {
+        "name": "as_of_date",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Ngày cutoff/inference."
+      },
+      {
+        "name": "horizon_sessions",
+        "type": "SMALLINT",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT 20; CHECK (horizon_sessions > 0)",
+        "description": "Số phiên dự báo."
+      },
+      {
+        "name": "target_name",
+        "type": "VARCHAR(150)",
+        "length": "150",
+        "constraint": "NOT NULL; DEFAULT 'OUTPERFORM_VNINDEX_20D'",
+        "description": "Target semantics của prediction."
+      },
+      {
+        "name": "predicted_label",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "NOT NULL; CHECK (predicted_label IN ('OUTPERFORM','NOT_OUTPERFORM','REJECTED','UNKNOWN'))",
+        "description": "OUTPERFORM/NOT_OUTPERFORM/REJECTED/UNKNOWN."
+      },
+      {
+        "name": "probability",
+        "type": "NUMERIC(7,6)",
+        "length": "7,6",
+        "constraint": "CHECK (probability IS NULL OR probability BETWEEN 0 AND 1)",
+        "description": "Xác suất model nếu có."
+      },
+      {
+        "name": "confidence_score",
+        "type": "NUMERIC(7,6)",
+        "length": "7,6",
+        "constraint": "CHECK (confidence_score IS NULL OR confidence_score BETWEEN 0 AND 1)",
+        "description": "Điểm độ tin cậy."
+      },
+      {
+        "name": "decision_threshold",
+        "type": "NUMERIC(7,6)",
+        "length": "7,6",
+        "constraint": "CHECK (decision_threshold IS NULL OR decision_threshold BETWEEN 0 AND 1)",
+        "description": "Ngưỡng phân lớp."
+      },
+      {
+        "name": "data_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_versions(id); ON DELETE SET NULL",
+        "description": "Data version dùng infer."
+      },
+      {
+        "name": "feature_set_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES feature_sets(id); ON DELETE SET NULL",
+        "description": "Feature set version."
+      },
+      {
+        "name": "input_snapshot",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Snapshot input/feature phục vụ audit."
+      },
+      {
+        "name": "rejection_reason",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Lý do REJECTED nếu không đủ điều kiện."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "prediction_outcomes",
+    "group": "11. Feature, Dataset & Local AI / Đặc trưng, tập dữ liệu và AI cục bộ",
+    "purpose": "Ground truth thực tế sau horizon dự báo.",
+    "fields": [
+      {
+        "name": "prediction_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; FOREIGN KEY REFERENCES predictions(id); ON DELETE CASCADE",
+        "description": "Prediction được đánh giá; đồng thời là PK, tạo quan hệ 1-0..1."
+      },
+      {
+        "name": "realized_at",
+        "type": "DATE",
+        "length": "-",
+        "constraint": "NOT NULL",
+        "description": "Ngày horizon hoàn tất để lấy ground truth."
+      },
+      {
+        "name": "security_return",
+        "type": "NUMERIC(18,10)",
+        "length": "18,10",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Return thực tế của security."
+      },
+      {
+        "name": "benchmark_return",
+        "type": "NUMERIC(18,10)",
+        "length": "18,10",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Return thực tế benchmark."
+      },
+      {
+        "name": "excess_return",
+        "type": "NUMERIC(18,10)",
+        "length": "18,10",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "security_return - benchmark_return."
+      },
+      {
+        "name": "actual_label",
+        "type": "VARCHAR(50)",
+        "length": "50",
+        "constraint": "CHECK (actual_label IN ('OUTPERFORM','NOT_OUTPERFORM','UNKNOWN'))",
+        "description": "Nhãn ground truth."
+      },
+      {
+        "name": "is_correct",
+        "type": "BOOLEAN",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Prediction có đúng actual_label hay không."
+      },
+      {
+        "name": "evaluated_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm hệ thống tính outcome."
+      }
+    ]
+  },
+  {
+    "name": "prediction_explanations",
+    "group": "11. Feature, Dataset & Local AI / Đặc trưng, tập dữ liệu và AI cục bộ",
+    "purpose": "Giải thích dự báo bằng factor hoặc narrative.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "prediction_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES predictions(id); ON DELETE CASCADE; NOT NULL",
+        "description": "Prediction cần giải thích."
+      },
+      {
+        "name": "explanation_type",
+        "type": "VARCHAR(30)",
+        "length": "30",
+        "constraint": "NOT NULL; CHECK (explanation_type IN ('SHAP','FEATURE_IMPORTANCE','RULE','LLM_SUMMARY','OTHER'))",
+        "description": "SHAP/FEATURE_IMPORTANCE/RULE/LLM_SUMMARY/OTHER."
+      },
+      {
+        "name": "top_factors",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '[]'::jsonb",
+        "description": "Danh sách factor chính JSONB."
+      },
+      {
+        "name": "narrative",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Giải thích dạng text."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  },
+  {
+    "name": "analysis_reports",
+    "group": "12. User-facing Analysis / Phân tích cho người dùng",
+    "purpose": "Báo cáo phân tích hiển thị cho người dùng.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "PRIMARY KEY; DEFAULT gen_random_uuid()",
+        "description": "Khóa chính định danh duy nhất của bản ghi."
+      },
+      {
+        "name": "user_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES users(id); ON DELETE SET NULL",
+        "description": "User yêu cầu/nhận báo cáo nếu có account."
+      },
+      {
+        "name": "company_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES companies(id); ON DELETE CASCADE",
+        "description": "Doanh nghiệp được phân tích."
+      },
+      {
+        "name": "security_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES securities(id); ON DELETE SET NULL",
+        "description": "Security liên quan."
+      },
+      {
+        "name": "report_type",
+        "type": "VARCHAR(40)",
+        "length": "40",
+        "constraint": "NOT NULL; CHECK (report_type IN ( 'COMPANY_OVERVIEW','FUNDAMENTAL','TECHNICAL','NEWS','COMBINED','COMPAR...)",
+        "description": "Loại report."
+      },
+      {
+        "name": "title",
+        "type": "VARCHAR(500)",
+        "length": "500",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Tiêu đề báo cáo."
+      },
+      {
+        "name": "content_markdown",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Nội dung render dạng Markdown."
+      },
+      {
+        "name": "structured_output",
+        "type": "JSONB",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT '{}'::jsonb",
+        "description": "Output cấu trúc JSONB."
+      },
+      {
+        "name": "model_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES model_versions(id); ON DELETE SET NULL",
+        "description": "Model Local AI liên quan nếu có."
+      },
+      {
+        "name": "llm_run_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES llm_runs(id); ON DELETE SET NULL",
+        "description": "LLM run liên quan nếu có."
+      },
+      {
+        "name": "data_version_id",
+        "type": "UUID",
+        "length": "-",
+        "constraint": "FOREIGN KEY REFERENCES data_versions(id); ON DELETE SET NULL",
+        "description": "Data version mà report dựa vào."
+      },
+      {
+        "name": "disclaimer",
+        "type": "TEXT",
+        "length": "-",
+        "constraint": "NULL allowed / no special constraint",
+        "description": "Cảnh báo/phạm vi sử dụng."
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMPTZ",
+        "length": "-",
+        "constraint": "NOT NULL; DEFAULT NOW()",
+        "description": "Thời điểm tạo bản ghi."
+      }
+    ]
+  }
+]
