@@ -29,7 +29,6 @@ export async function requestApi(
     ...init,
     headers: {
       Accept: 'application/json, text/plain, */*',
-      'ngrok-skip-browser-warning': 'true',
       ...(init.body ? { 'Content-Type': 'application/json' } : {}),
       ...init.headers,
     },
