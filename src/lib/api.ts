@@ -29,6 +29,10 @@ export async function requestApi(
     ...init,
     headers: {
       Accept: 'application/json, text/plain, */*',
+      // Ngrok shows a browser interstitial unless this request header is set.
+      // The backend CORS policy explicitly allows it, so the browser preflight
+      // is handled before the actual API request.
+      'ngrok-skip-browser-warning': 'true',
       ...(init.body ? { 'Content-Type': 'application/json' } : {}),
       ...init.headers,
     },
